@@ -1,0 +1,23 @@
+---
+title: "Final Report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+tar_load(c(fig_iris, tbl_iris))
+```
+
+# Scatterplot of characteristics by species
+```{r}
+fig_iris
+```
+
+<BR>
+
+# Characteristics by species  
+```{r}
+tbl_iris %>%
+  width(width = 3)
+```

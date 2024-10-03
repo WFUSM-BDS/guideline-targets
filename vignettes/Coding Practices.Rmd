@@ -1,0 +1,50 @@
+---
+title: "Coding Practices"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## File organization
+
+Each project will look slightly different depending on its purpose, many projects may include these files/folders
+
+- **R/** - includes all R programs
+
+- **reports/** - includes .Rmd or .qmd files that render reports such as web reports or DSMB reports
+
+- **\_targets.R** - this R file contains your targets pipeline
+
+- **.gitignore** - Be sure to add _targets/ to the .gitignore so that you don't push any data
+to GitHub accidentally. See the [guideline-data-safety](https://github.com/WFUSM-BDS/guideline-data-safety?tab=readme-ov-file#using-gitignore) repo for more information about .gitignore
+
+- **packages.R** - An R program to load all packages into R session. This should be sourced in _targets.R
+
+For a larger example of what a reporting pipeline for a Data Coordinating Center could look like resulting in a DSMB report, see [leap-report](https://github.com/WFUSM-BDS/leap-report?tab=readme-ov-file#leap-report)
+
+## Naming targets
+
+- Your project should set some guidelines for naming based off of your anticipated pipeline. Below are suggestions for what the first word of a target should be named and what it should generally do.
+
+    + `data`: these targets create a dataset to be used downstream.
+    
+    + `result`: these targets leverage a dataset to make some result
+    
+    + `tbl`: these targets leverage a result to make a table object (e.g., a `flextable`)
+    
+    + `fig`: these targets leverage a result to make a figure (e.g., a `ggplot2` object)
+
+    + `report` : these targets create a report document
+
+### Functions
+
+- Functions may be named with the convention of `noun_verb_detail()`. For example,
+
+    + `data_load_participants()` data is the noun, load the verb, and participants indicates exactly what kind of data are being loaded
+    
+    + `labels_load()` labels is the noun, load the verb, and no details are given because the labels object is pretty general.
+
+- The primary inputs for functions should be targets. Non-target inputs should be ordered after target inputs and should have reasonable default values. 
+

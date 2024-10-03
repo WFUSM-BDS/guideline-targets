@@ -1,0 +1,12 @@
+.Rproj.user
+*.Rproj
+
+
+.Rhistory
+.Rdata
+.httr-oauth
+.DS_Store
+
+_targets/
+
+vignettes/_targets*
