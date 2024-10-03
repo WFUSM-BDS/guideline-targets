@@ -2,7 +2,7 @@
 # Load packages required to define the pipeline:
 source("./packages.R")
 
-## Load your R files
+## Load your R files:
 lapply(list.files("./R", full.names = TRUE), source)
 
 # Define targets pipeline
