@@ -31,13 +31,15 @@ We will use the `iris` dataset to build a basic plot and summary table using the
 
 ```{r}
 library(targets)
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(stringr)
 library(gtsummary)
 
 ```
 
 ```{targets set-up, tar_globals = TRUE, echo = FALSE}
-tar_option_set(packages = c("tidyverse", "gtsummary"))
+tar_option_set(packages = c("dplyr", "gtsummary", "ggplot2", "stringr"))
 ```
 
 Define a target using `tar_target` that we will call `data_iris` which loads in the `iris` dataset and sorts by Sepal.Length. Most of the time, the R code we'd like to run within the `command` argument, is too messy to include within `tar_target` so we write it as a separate function and call the function within `command`.
