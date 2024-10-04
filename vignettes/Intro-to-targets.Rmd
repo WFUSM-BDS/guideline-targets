@@ -98,15 +98,19 @@ Running `tar_make()` for the first time creates all 3 of our defined targets.
 - fig_iris
 - tbl_iris
 
+```{r testR}
+head(iris)
+```
+
 ```{r make-pipeline}
-tar_make()
+targets::tar_make()
 ```
 
 <BR>
 
 We can load the targets into our environment with `tar_load` to view the contents of each target.
 
-```{r, view_data}
+```{r view_data}
 tar_load(c(data_iris, fig_iris, tbl_iris))
 
 head(data_iris)
