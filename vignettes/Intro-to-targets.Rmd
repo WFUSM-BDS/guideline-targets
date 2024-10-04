@@ -154,7 +154,9 @@ tabulate_data_iris <- function(data_iris) {
 
 
 ```{r make-again}
-tar_make()
+source("_targets_r/targets/define-data-target.R")
+
+data_load_iris()
 ```
 
 Note that `targets` knew to skip running both `data_iris` and `fig_iris` again because nothing changed, but it re-ran `tbl_iris` like we wanted! 
