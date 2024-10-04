@@ -2,7 +2,7 @@
 # Load packages required to define the pipeline:
 source("./packages.R")
 
-## Load your R files:
+## Load your R files
 lapply(list.files("./R", full.names = TRUE), source)
 
 # Define targets pipeline
@@ -22,7 +22,7 @@ list(
   ),
   
   
-  tar_render(name = report_iris,
+  tar_render(name = report,
              path = 'reports/final_report.Rmd')
 )
 
