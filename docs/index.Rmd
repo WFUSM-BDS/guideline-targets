@@ -1,0 +1,287 @@
+---
+title: "targets"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# What is targets?
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+library(targets)
+tar_unscript()
+# Removes the _targets folder which contains the result of each target. It's removed here so that targets will run for the first time each time
+tar_destroy()
+```
+
+
+The `targets` package allows you to separate your data analysis/monitoring code into smaller chunks that are then pieced together into a pipeline through established dependencies.
+
+Once the dependencies are defined, `targets` keeps track of which code chunks are up-to-date
+and what needs to be re-run. 
+
+Before getting too into the weeds, let's look at an example.
+
+## Basic Example
+
+We will use the `iris` dataset to build a basic plot and summary table using the `targets` framework.
+
+```{r}
+library(targets)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(gtsummary)
+
+```
+
+```{targets set-up, tar_globals = TRUE, echo = FALSE}
+tar_option_set(packages = c("dplyr", "gtsummary", "ggplot2", "stringr"))
+```
+
+Define a target using `tar_target` that we will call `data_iris` which loads in the `iris` dataset and sorts by Sepal.Length. Most of the time, the R code we'd like to run within the `command` argument, is too messy to include within `tar_target` so we write it as a separate function and call the function within `command`.
+
+```{targets define-data-target}
+data_load_iris <- function() {
+  iris %>% 
+    arrange(Sepal.Length)
+}     
+
+tar_target(name = data_iris,
+           command = data_load_iris())
+```
+
+<BR>
+
+Next, define a target that plots the data stored in `data_iris`. Note, here we put the R code within target to demonstrate that it is equivalent, but it can be more difficult to read.
+
+```{targets define-plot-target}
+tar_target(name = fig_iris,
+           command = data_iris %>% 
+             ggplot(aes(x = Sepal.Width, y = Sepal.Length, color = Species)) +
+             geom_point()
+           )
+```
+
+
+Lastly, define a target that creates a table based on the data stored in `data_iris`.
+
+```{targets define-table-target}
+tabulate_data_iris <- function(data_iris) {
+  data_iris %>%
+    tbl_summary(
+      by = Species,
+      statistic = all_continuous() ~ c("{mean} ({min}, {max})"),
+      label = list(
+        Sepal.Length = "Sepal Length",
+        Sepal.Width = "Sepal Width",
+        Petal.Length = "Petal Length",
+        Petal.Width = "Petal Width"
+      )
+    )
+}
+
+
+tar_target(name = tbl_iris,
+           command = tabulate_data_iris(data_iris)
+           )
+```
+
+<BR>
+
+Running `tar_make()` for the first time creates all 3 of our defined targets.
+
+- data_iris
+- fig_iris
+- tbl_iris
+
+```{r make-pipeline}
+targets::tar_make()
+```
+
+<BR>
+
+We can load the targets into our environment with `tar_load` to view the contents of each target.
+
+```{r view_data}
+tar_load(c(data_iris, fig_iris, tbl_iris))
+
+head(data_iris)
+
+fig_iris
+
+tbl_iris
+```
+
+<BR>
+
+## Why use targets?
+
+You may be thinking, why not just create `data_iris` as an R object like normal?
+
+```{r easy}
+data_iris2 <- iris %>% 
+  arrange(Sepal.Length)
+
+head(data_iris2)
+```
+
+In a simple example like this, sure that's fair. But even in a small project, I'd argue that targets has an advantage. 
+
+Let's say that we want to modify our table. I decided to fix the strings for Species ("setosa", "versicolor", and "viriginica") so that the first letter of each word is capitalized. So I update `tabulate_data_iris` and re-run `tar_make`. 
+
+
+```{targets redo-table-target}
+tabulate_data_iris <- function(data_iris) {
+  data_iris %>%
+    mutate(Species = str_to_title(Species)) %>%
+    tbl_summary(
+      by = Species,
+      statistic = all_continuous() ~ c("{mean} ({min}, {max})"),
+      label = list(
+        Sepal.Length = "Sepal Length",
+        Sepal.Width = "Sepal Width",
+        Petal.Length = "Petal Length",
+        Petal.Width = "Petal Width"
+      )
+    )
+}
+
+```
+
+
+```{r make-again}
+source("_targets_r/targets/define-data-target.R")
+
+data_load_iris()
+```
+
+Note that `targets` knew to skip running both `data_iris` and `fig_iris` again because nothing changed, but it re-ran `tbl_iris` like we wanted! 
+
+<BR>
+
+How does it know to do this? Let's take a look at the dependency structure we've set up.
+
+```{r}
+tar_visnetwork()
+```
+
+We can see that both `fig_iris` and `tbl_iris` relay on the dataset `data_iris`. `tbl_iris` also relies on the function  `tabulate_data_iris`. In our previous example, we updated `tabulate_data_iris` which is only used in `tbl_iris`, therefore only the `tbl_iris` target needed to be re-run.
+
+<BR>
+
+Let's say, however, that we no longer want to use any iris data where the species is "versicolor". We need to update our data target.
+
+```{targets update-data-iris}
+data_load_iris <- function() {
+  iris %>% 
+    arrange(Sepal.Length) %>%
+    filter(Species != "versicolor")
+}           
+```
+
+<BR>
+
+Re-running the dependency map shows that now all 3 of our targets are outdated because we modified  `data_load_iris` which is used in `data_iris` and both our figure and table depend on `data_iris`. 
+
+```{r}
+tar_visnetwork()
+```
+
+So, when we re-run `tar_make`...
+
+```{r and-make-again}
+tar_make()
+```
+
+We see all 3 of our targets are dispatched and completed as expected!
+
+<BR>
+
+## Try it yourself!
+
+The main folder of this repo contains a similar pipeline in "_targets.R" as we worked through in this example. To try it yourself, close this repo on your personal machine, run `tar_make` in your console to run the pipeline, and add to or modify the pipeline to see how targets reacts.
+
+<BR>
+<BR>
+
+# Benefits of using targets
+
+The main benefits in using `targets` to structure your pipeline are efficiency, consistency, and reproducibility.
+
+## 1) Efficiency
+
+### Dependencies
+
+Scenario 1: Let's say you you're running a complicated analysis that requires a significant amount of run time each time it occurs. Without targets, you may choose to have all of your script in one program. It's reproducible sure, but what happens when you just want to make a slight change to the table at the very end of the document? You have to run all of the script again and wait for it to finish. Only to find out there is an error at the very end!
+
+Scenario 2: You then decided to save yourself time and split your analysis code into several parts so each can be debugged separately. You run the time-consuming analyses separately and save each as .rds files. In your other analysis programs, you read in the .rds files to and make your tables and figures. Six months later, you get updated data. Now you manually need to rerun all the analysis programs on your new data. Do you remember exactly which files need to be updated? 
+
+`targets` solves these problems by having you initially declare the dependencies with `tar_target`. `targets` will manage updating your out-of-date targets for you when you run `tar_make`
+
+### Storing metadata
+
+When a target is run with `tar_make`, the results are stored in the "_targets" folder. This means I can simply use `tar_load` to bring the target into my environment even though I ran `tar_make` yesterday in a different instance of R. Its a great time saver when coding a targets project interactively in R. However, remember that you may be working with outdated data and if you aren't sure if something has changed in a target, run `tar_make` first before loading targets into the environment.
+
+<BR>
+
+## 2) Consistency
+
+`targets` allows you to break up your pipeline into chunks (targets) that can be reused for multiple purposes such as different reports. Take for example a target that contains a data frame of your randomized participant data with labeled factors for site IDs. You can reuse this target in other targets as a function input that allows you to merge in the same formatted randomized data information into each target you create. Now each time you report the site, it will use the same site label that you created in your randomized participant data target, and there is only one location to update code if the label changes or a new site is added. See [leap-report's](https://github.com/WFUSM-BDS/leap-report) `data_randomized` target and how that is reused in many future targets.
+
+<BR>
+
+## 3) Reproducibility
+
+When `tar_make` runs without error on your machine, everything in your pipeline *should* be reproducible on another computer.  This is because targets runs the pipeline in a fresh R session just like R Markdown. Therefore, nothing in your own environment could be affecting the success `tar_make`.
+
+Typically if `tar_make` runs without error on one machine but not another, it is due to variation in package versions. See [guideline-reproducibility](https://github.com/WFUSM-BDS/guideline-reproducibility) for information on the `renv` package and how package management is essential to creating a reproducible pipeline on all machines.
+
+<BR>
+
+# Coding practices with targets
+
+## File organization
+
+Each project will look slightly different depending on its purpose, many projects may include these files/folders
+
+- **R/** - includes all R programs
+
+- **reports/** - includes .Rmd or .qmd files that render reports such as web reports or DSMB reports
+
+- **\_targets.R** - this R file contains your targets pipeline
+
+- **.gitignore** - Be sure to add _targets/ to the .gitignore so that you don't push any data
+to GitHub accidentally. See the [guideline-data-safety](https://github.com/WFUSM-BDS/guideline-data-safety?tab=readme-ov-file#using-gitignore) repo for more information about .gitignore
+
+- **packages.R** - An R program to load all packages into R session. This should be sourced in _targets.R
+
+For a larger example of what a reporting pipeline for a Data Coordinating Center could look like resulting in a DSMB report, see [leap-report](https://github.com/WFUSM-BDS/leap-report?tab=readme-ov-file#leap-report)
+
+## Naming targets
+
+- Your project should set some guidelines for naming based off of your anticipated pipeline. Below are suggestions for what the first word of a target should be named and what it should generally do.
+
+    + `data`: these targets create a dataset to be used downstream.
+    
+    + `result`: these targets leverage a dataset to make some result
+    
+    + `tbl`: these targets leverage a result to make a table object (e.g., a `flextable`)
+    
+    + `fig`: these targets leverage a result to make a figure (e.g., a `ggplot2` object)
+
+    + `report` : these targets create a report document
+
+### Functions
+
+- Functions may be named with the convention of `noun_verb_detail()`. For example,
+
+    + `data_load_participants()` data is the noun, load the verb, and participants indicates exactly what kind of data are being loaded
+    
+    + `labels_load()` labels is the noun, load the verb, and no details are given because the labels object is pretty general.
+
+- The primary inputs for functions should be targets. Non-target inputs should be ordered after target inputs and should have reasonable default values. 
+
