@@ -22,7 +22,7 @@ list(
   ),
   
   
-  tar_render(name = report_iris,
+  tar_render(name = report,
              path = 'reports/final_report.Rmd')
 )
 
