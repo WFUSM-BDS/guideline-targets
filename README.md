@@ -1,6 +1,9 @@
 
 # guideline-targets
 
+[BDS - Introduction to
+targets](https://wfusm-bds.github.io/guideline-targets/)
+
 The goals of guideline-targets are to provide
 
 1)  An introduction to the `targets` package
