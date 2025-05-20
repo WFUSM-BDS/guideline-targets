@@ -1,0 +1,17 @@
+Package: guideline-targets
+Title: Guidelines for using the targets R Package in Wake Forest Biostats and Data Science Projects
+Version: 0.0.0.9000
+Authors@R: 
+    person("Courtney", "Simmons", , "cgsimmon@wakehealth.edu", role = c("aut", "cre"))
+Description: Introduces best practices for general usage of the targets package and also provides specific recommendations and examples that highlight ways to get more out of targets in collaborations with members of the WFUSM-BDS organization
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Imports: 
+    dplyr,
+    ggplot2,
+    gtsummary,
+    rmarkdown,
+    stringr,
+    targets

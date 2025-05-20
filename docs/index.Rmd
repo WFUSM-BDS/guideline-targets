@@ -1,12 +1,12 @@
 ---
-title: "Intro to targets"
+title: "targets"
 output: 
   html_document:
     toc: true
     toc_float: true
 ---
 
-# Overview
+# What is targets?
 
 ```{r setup, include=FALSE, echo = FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE)
@@ -31,13 +31,15 @@ We will use the `iris` dataset to build a basic plot and summary table using the
 
 ```{r}
 library(targets)
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(stringr)
 library(gtsummary)
 
 ```
 
 ```{targets set-up, tar_globals = TRUE, echo = FALSE}
-tar_option_set(packages = c("tidyverse", "gtsummary"))
+tar_option_set(packages = c("dplyr", "gtsummary", "ggplot2", "stringr"))
 ```
 
 Define a target using `tar_target` that we will call `data_iris` which loads in the `iris` dataset and sorts by Sepal.Length. Most of the time, the R code we'd like to run within the `command` argument, is too messy to include within `tar_target` so we write it as a separate function and call the function within `command`.
@@ -97,14 +99,14 @@ Running `tar_make()` for the first time creates all 3 of our defined targets.
 - tbl_iris
 
 ```{r make-pipeline}
-tar_make()
+targets::tar_make()
 ```
 
 <BR>
 
 We can load the targets into our environment with `tar_load` to view the contents of each target.
 
-```{r, view_data}
+```{r view_data}
 tar_load(c(data_iris, fig_iris, tbl_iris))
 
 head(data_iris)
@@ -237,3 +239,49 @@ When `tar_make` runs without error on your machine, everything in your pipeline 
 Typically if `tar_make` runs without error on one machine but not another, it is due to variation in package versions. See [guideline-reproducibility](https://github.com/WFUSM-BDS/guideline-reproducibility) for information on the `renv` package and how package management is essential to creating a reproducible pipeline on all machines.
 
 <BR>
+
+# Coding practices with targets
+
+## File organization
+
+Each project will look slightly different depending on its purpose, many projects may include these files/folders
+
+- **R/** - includes all R programs
+
+- **reports/** - includes .Rmd or .qmd files that render reports such as web reports or DSMB reports
+
+- **\_targets.R** - this R file contains your targets pipeline
+
+- **.gitignore** - Be sure to add _targets/ to the .gitignore so that you don't push any data
+to GitHub accidentally. See the [guideline-data-safety](https://github.com/WFUSM-BDS/guideline-data-safety?tab=readme-ov-file#using-gitignore) repo for more information about .gitignore
+
+- **packages.R** - An R program to load all packages into R session. This should be sourced in _targets.R
+
+- **conflicts.R** - An R program that declares which function names will be preferred if multiple packages use the same name for different functions (e.g., dplyr::filter versus stats::filter)
+
+For a larger example of what a reporting pipeline for a Data Coordinating Center could look like resulting in a DSMB report, see [leap-report](https://github.com/WFUSM-BDS/leap-report?tab=readme-ov-file#leap-report)
+
+## Naming targets
+
+- Your project should set some guidelines for naming based off of your anticipated pipeline. Below are suggestions for what the first word of a target should be named and what it should generally do.
+
+    + `data`: these targets create a dataset to be used downstream.
+    
+    + `result`: these targets leverage a dataset to make some result
+    
+    + `tbl`: these targets leverage a result to make a table object (e.g., a `flextable`)
+    
+    + `fig`: these targets leverage a result to make a figure (e.g., a `ggplot2` object)
+
+    + `report` : these targets create a report document
+
+### Functions
+
+- Functions may be named with the convention of `noun_verb_detail()`. For example,
+
+    + `data_load_participants()` data is the noun, load the verb, and participants indicates exactly what kind of data are being loaded
+    
+    + `labels_load()` labels is the noun, load the verb, and no details are given because the labels object is pretty general.
+
+- The primary inputs for functions should be targets. Non-target inputs should be ordered after target inputs and should have reasonable default values. 
+
