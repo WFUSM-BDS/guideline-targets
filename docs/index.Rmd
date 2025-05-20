@@ -257,6 +257,8 @@ to GitHub accidentally. See the [guideline-data-safety](https://github.com/WFUSM
 
 - **packages.R** - An R program to load all packages into R session. This should be sourced in _targets.R
 
+- **conflicts.R** - An R program that declares which function names will be preferred if multiple packages use the same name for different functions (e.g., dplyr::filter versus stats::filter)
+
 For a larger example of what a reporting pipeline for a Data Coordinating Center could look like resulting in a DSMB report, see [leap-report](https://github.com/WFUSM-BDS/leap-report?tab=readme-ov-file#leap-report)
 
 ## Naming targets
